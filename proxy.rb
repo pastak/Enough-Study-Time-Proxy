@@ -1,11 +1,22 @@
 require 'webrick'
 require 'webrick/httpproxy'
 
-document_root = './htdocs'
+document_root = File.expand_path(File.dirname(__FILE__))+'/htdocs'
+
 rubybin = 'C:/Ruby192/bin/ruby.exe'
 
+# address => http://127.0.0.1:10080
+
 handler = Proc.new() {|req,res|
-	res.set_redirect(WEBrick::HTTPStatus::TemporaryRedirect,"http://127.0.0.1:10080/cgi-bin/index.rb")
+	status="start"
+	case status
+	when "start"
+		res.set_redirect(WEBrick::HTTPStatus::TemporaryRedirect,"http://127.0.0.1:10080/start.htm")
+	when "yet"
+		res.set_redirect(WEBrick::HTTPStatus::TemporaryRedirect,"http://127.0.0.1:10080/yet.htm")
+	when "finish"
+		#res.set_redirect(WEBrick::HTTPStatus::TemporaryRedirect,req.request_uri)
+	end
 }
 
 server = WEBrick::HTTPProxyServer.new({
@@ -16,11 +27,12 @@ server = WEBrick::HTTPProxyServer.new({
 	:ProxyContentHandler => handler
 })
 
-['/cgi-bin/index.rb'].each {|cgi_file|
+
+['/cgi-bin/setting.rb'].each {|cgi_file|
 	server.mount(cgi_file, WEBrick::HTTPServlet::CGIHandler, document_root + cgi_file)
 }
 
-['INT','TERM'].each{|signal|
+['INT'].each{|signal|
 	Signal.trap(signal){server.shutdown}
 }
 
